@@ -39,6 +39,7 @@ export function TournamentBracket({ userName }: { userName: string }) {
   }
 
   const completeGroupStage = (advanced: boolean) => {
+    console.log("Completing group stage, advanced:", advanced);
     if (advanced) {
       // User advances, simulate other group results and create knockout stages
       const knockoutTeams = [userName, "Team B1", "Team C1", "Team D1", "Team A2", "Team B2", "Team C2", "Team D2"]
@@ -177,15 +178,22 @@ export function TournamentBracket({ userName }: { userName: string }) {
     </Card>
   )
 
-  const resetToGroupStage = () => {
-    setTournament(prev => ({
-      ...prev,
+  const resetTournament = () => {
+    console.log("Resetting tournament to initial state");
+    setTournament(() => ({
+      groupStage: [
+        { id: "A-1", team1: userName, team2: "", score1: null, score2: null, round: "group", position: 0, group: "A", date: "", time: "", location: "" },
+        { id: "A-2", team1: userName, team2: "", score1: null, score2: null, round: "group", position: 1, group: "A", date: "", time: "", location: "" },
+        { id: "A-3", team1: userName, team2: "", score1: null, score2: null, round: "group", position: 2, group: "A", date: "", time: "", location: "" },
+      ],
+      currentGroupMatch: 0,
       knockoutStages: []
-    }))
+    }));
   }
 
   return (
     <div className="space-y-8">
+      <Button onClick={resetTournament}>Restart Tournament</Button>
       {tournament.knockoutStages.length === 0 ? (
         <GroupStage
           userMatches={tournament.groupStage}
@@ -195,21 +203,18 @@ export function TournamentBracket({ userName }: { userName: string }) {
           userName={userName}
         />
       ) : (
-        <>
-          <Button onClick={resetToGroupStage}>Back to Group Stage</Button>
-          <div className="flex flex-wrap gap-8 justify-center">
-            {tournament.knockoutStages.map((stage, stageIndex) => (
-              <Card key={stage.round} className="w-64">
-                <CardHeader>
-                  <CardTitle className="text-center">{stage.round}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4">
-                  {stage.matches.map(match => renderKnockoutMatch(match, stageIndex))}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </>
+        <div className="flex flex-wrap gap-8 justify-center">
+          {tournament.knockoutStages.map((stage, stageIndex) => (
+            <Card key={stage.round} className="w-64">
+              <CardHeader>
+                <CardTitle className="text-center">{stage.round}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                {stage.matches.map(match => renderKnockoutMatch(match, stageIndex))}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   )

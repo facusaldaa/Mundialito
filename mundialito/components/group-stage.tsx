@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { GroupStageMatch } from "@/types/tournament"
 import { MatchRecorder } from "@/components/match-recorder"
 import { GroupStageResultPopup } from "@/components/group-stage-result-popup"
+import { CoinFlipPopup } from "@/components/coin-flip-popup"
 
 interface GroupStageProps {
   userMatches: GroupStageMatch[]
@@ -20,6 +21,7 @@ export function GroupStage({ userMatches, currentMatch, onUpdateMatches, onCompl
   const [currentMatchIndex, setCurrentMatchIndex] = useState(currentMatch)
   const [showResultPopup, setShowResultPopup] = useState(false)
   const [advanced, setAdvanced] = useState(false)
+  const [showCoinFlip, setShowCoinFlip] = useState(false)
 
   const updateMatch = (updatedMatch: GroupStageMatch) => {
     const newMatches = localMatches.map(match => 
@@ -46,9 +48,24 @@ export function GroupStage({ userMatches, currentMatch, onUpdateMatches, onCompl
   const checkAdvancement = () => {
     const wins = localMatches.filter(m => m.winner === userName).length
     const draws = localMatches.filter(m => m.winner === "draw").length
-    const hasAdvanced = wins >= 1 && (wins + draws) >= 2
-    setAdvanced(hasAdvanced)
-    setShowResultPopup(true)
+    const totalPoints = wins * 3 + draws;
+
+    if (totalPoints >= 7) {
+      setAdvanced(true);
+      setShowResultPopup(true);
+    } else if (totalPoints === 6) {
+      setShowCoinFlip(true);
+    } else {
+      setAdvanced(false);
+      setShowResultPopup(true);
+    }
+  }
+
+  const handleCoinFlip = () => {
+    const result = Math.random() < 0.5;
+    setAdvanced(result);
+    setShowCoinFlip(false);
+    setShowResultPopup(true);
   }
 
   const closeResultPopup = () => {
@@ -71,6 +88,14 @@ export function GroupStage({ userMatches, currentMatch, onUpdateMatches, onCompl
       </CardContent>
     </Card>
   )
+
+  const renderCoinFlipResult = () => (
+    <div>
+      {advanced !== null && (
+        <p>Coin Flip Result: {advanced ? "Heads" : "Tails"}</p>
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -102,6 +127,12 @@ export function GroupStage({ userMatches, currentMatch, onUpdateMatches, onCompl
         onClose={closeResultPopup}
         advanced={advanced}
       />
+      <CoinFlipPopup 
+        isOpen={showCoinFlip} 
+        onClose={() => setShowCoinFlip(false)} 
+        onFlip={handleCoinFlip} 
+      />
+      {renderCoinFlipResult()}
     </div>
   )
 }

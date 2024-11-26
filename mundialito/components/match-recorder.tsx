@@ -18,9 +18,9 @@ export function MatchRecorder({ match, onUpdateMatch, onComplete, userName }: Ma
     setLocalMatch(prev => {
       const updated = { ...prev, [field]: value }
       if (field === "score1" || field === "score2") {
-        const score1 = field === "score1" ? parseInt(value) : prev.score1
-        const score2 = field === "score2" ? parseInt(value) : prev.score2
-        if (score1 !== null && score2 !== null) {
+        const score1 = field === "score1" ? (parseInt(value) || 0) : prev.score1 || 0
+        const score2 = field === "score2" ? (parseInt(value) || 0) : prev.score2 || 0
+        if (!isNaN(score1) && !isNaN(score2)) {
           updated.winner = score1 > score2 ? updated.team1 : (score1 < score2 ? updated.team2 : "draw")
         }
       }
@@ -30,8 +30,10 @@ export function MatchRecorder({ match, onUpdateMatch, onComplete, userName }: Ma
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    console.log("Submitting match:", localMatch);
     onUpdateMatch(localMatch)
     onComplete()
+    setLocalMatch(match)
   }
 
   return (
