@@ -53,19 +53,12 @@ export function GroupStage({ userMatches, currentMatch, onUpdateMatches, onCompl
     if (totalPoints >= 7) {
       setAdvanced(true);
       setShowResultPopup(true);
-    } else if (totalPoints === 6) {
+    } else if (totalPoints === 4) {
       setShowCoinFlip(true);
     } else {
       setAdvanced(false);
       setShowResultPopup(true);
     }
-  }
-
-  const handleCoinFlip = () => {
-    const result = Math.random() < 0.5;
-    setAdvanced(result);
-    setShowCoinFlip(false);
-    setShowResultPopup(true);
   }
 
   const closeResultPopup = () => {
@@ -110,6 +103,7 @@ export function GroupStage({ userMatches, currentMatch, onUpdateMatches, onCompl
               onUpdateMatch={updateMatch}
               onComplete={nextMatch}
               userName={userName}
+              isEditable={true}
             />
           ) : (
             localMatches.map((match, index) => renderMatchSummary(match, index))
@@ -129,8 +123,11 @@ export function GroupStage({ userMatches, currentMatch, onUpdateMatches, onCompl
       />
       <CoinFlipPopup 
         isOpen={showCoinFlip} 
-        onClose={() => setShowCoinFlip(false)} 
-        onFlip={handleCoinFlip} 
+        onOpenChange={setShowCoinFlip}
+        onResult={won => {
+          setAdvanced(won);
+          setShowResultPopup(true);
+        }}
       />
       {renderCoinFlipResult()}
     </div>

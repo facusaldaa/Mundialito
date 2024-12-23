@@ -4,8 +4,10 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { GroupStage } from "@/components/group-stage"
 import { Match, GroupStageMatch, KnockoutStage, Tournament } from "@/types/tournament"
+import { MatchRecorder } from "@/components/match-recorder"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { CoinFlipPopup } from "@/components/coin-flip-popup"
 
 export function TournamentBracket({ userName }: { userName: string }) {
   const [tournament, setTournament] = useState<Tournament>(() => {
@@ -25,21 +27,20 @@ export function TournamentBracket({ userName }: { userName: string }) {
       knockoutStages: []
     }
   })
+  const [showKnockout, setShowKnockout] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [showCoinFlip, setShowCoinFlip] = useState(false);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [showCoinFlipExplanation, setShowCoinFlipExplanation] = useState(false);
+  const [showCoinFlipResult, setShowCoinFlipResult] = useState(false);
+  const [coinFlipWon, setCoinFlipWon] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("tournament-data", JSON.stringify(tournament))
   }, [tournament])
 
-  const updateGroupMatches = (updatedMatches: GroupStageMatch[], currentMatch: number) => {
-    setTournament(prev => ({
-      ...prev,
-      groupStage: updatedMatches,
-      currentGroupMatch: currentMatch
-    }))
-  }
-
   const completeGroupStage = (advanced: boolean) => {
-    console.log("Completing group stage, advanced:", advanced);
+    console.log("Group stage completed with matches:", tournament.groupStage);
     if (advanced) {
       // User advances, simulate other group results and create knockout stages
       const knockoutTeams = [userName, "Team B1", "Team C1", "Team D1", "Team A2", "Team B2", "Team C2", "Team D2"]
@@ -65,23 +66,7 @@ export function TournamentBracket({ userName }: { userName: string }) {
         ...prev,
         knockoutStages: [quarterFinals]
       }))
-    } else {
-      // User doesn't advance, end the tournament
-      setTournament(prev => ({
-        ...prev,
-        knockoutStages: [{
-          round: "Tournament End",
-          matches: [{
-            id: "end",
-            team1: userName,
-            team2: "Did not advance",
-            score1: null,
-            score2: null,
-            round: "Tournament End",
-            position: 0
-          }]
-        }]
-      }))
+      setShowKnockout(true);
     }
   }
 
@@ -189,19 +174,168 @@ export function TournamentBracket({ userName }: { userName: string }) {
       currentGroupMatch: 0,
       knockoutStages: []
     }));
+    setCurrentMatchIndex(0);
+    setShowResults(false);
+    setShowKnockout(false);
+    setShowCoinFlip(false);
+    setIsGroupStageComplete(false);
   }
+
+  const calculateGroupStageResult = (matches: GroupStageMatch[]): { points: number, needsCoinFlip: boolean } => {
+    console.log("Calculating result for matches:", matches);
+    let wins = 0;
+    let draws = 0;
+
+    matches.forEach(match => {
+      console.log(`Checking match ${match.id}:`, match);
+      if (match.score1 !== null && match.score2 !== null && match.team2) {
+        const score1 = Number(match.score1);
+        const score2 = Number(match.score2);
+        console.log(`Match ${match.id} scores: ${score1} - ${score2}`);
+        
+        if (score1 > score2) {
+          wins++;
+          console.log(`Match ${match.id}: Win (+3 points)`);
+        } else if (score1 === score2) {
+          draws++;
+          console.log(`Match ${match.id}: Draw (+1 point)`);
+        }
+      }
+    });
+
+    const points = (wins * 3) + draws;
+    console.log(`Final tally: ${wins} wins (${wins * 3} points) + ${draws} draws (${draws} points) = ${points} total points`);
+    return {
+      points,
+      needsCoinFlip: points === 4
+    };
+  };
+
+  const [isGroupStageComplete, setIsGroupStageComplete] = useState(false);
+
+  const handleMatchUpdate = (updatedMatch: GroupStageMatch) => {
+    console.log("Updating match:", updatedMatch);
+    const matchWithWinner = {
+      ...updatedMatch,
+      winner: updatedMatch.score1 !== null && updatedMatch.score2 !== null && updatedMatch.team2
+        ? Number(updatedMatch.score1) > Number(updatedMatch.score2) 
+          ? updatedMatch.team1 
+          : Number(updatedMatch.score2) > Number(updatedMatch.score1)
+            ? updatedMatch.team2 
+            : "draw"
+        : ""
+    };
+    
+    setTournament(prev => {
+      const newGroupStage = prev.groupStage.map(match => 
+        match.id === matchWithWinner.id ? matchWithWinner : match
+      );
+
+      // Move to next match if current match is completed
+      if (matchWithWinner.team2 && matchWithWinner.score1 !== null && matchWithWinner.score2 !== null) {
+        const nextIndex = currentMatchIndex + 1;
+        if (nextIndex < newGroupStage.length) {
+          setCurrentMatchIndex(nextIndex);
+        }
+      }
+
+      return {
+        ...prev,
+        groupStage: newGroupStage
+      };
+    });
+  };
+
+  const handleGroupStageComplete = () => {
+    const result = calculateGroupStageResult(tournament.groupStage);
+    console.log("Group stage completion - Points:", result.points);
+    setIsGroupStageComplete(true);
+    
+    if (result.points >= 7) {
+      console.log("Advanced directly with 7+ points");
+      setShowKnockout(true);
+      completeGroupStage(true);
+    } else if (result.points === 4) {
+      console.log("Showing coin flip explanation for 4 points");
+      setShowCoinFlipExplanation(true);
+    } else {
+      console.log(`Eliminated with ${result.points} points`);
+      resetTournament();
+      setShowKnockout(false);
+      completeGroupStage(false);
+    }
+  };
+
+  const handleNext = () => {
+    const nextIndex = currentMatchIndex + 1;
+    if (nextIndex < tournament.groupStage.length) {
+      setCurrentMatchIndex(nextIndex);
+    }
+  };
+
+  const handlePrevious = () => {
+    const prevIndex = currentMatchIndex - 1;
+    if (prevIndex >= 0) {
+      setCurrentMatchIndex(prevIndex);
+    }
+  };
+
+  // Add safety check for currentMatchIndex
+  const safeCurrentMatch = Math.min(Math.max(0, currentMatchIndex), tournament.groupStage.length - 1);
+  const currentMatch = tournament.groupStage[safeCurrentMatch];
 
   return (
     <div className="space-y-8">
-      <Button onClick={resetTournament}>Restart Tournament</Button>
-      {tournament.knockoutStages.length === 0 ? (
-        <GroupStage
-          userMatches={tournament.groupStage}
-          currentMatch={tournament.currentGroupMatch}
-          onUpdateMatches={updateGroupMatches}
-          onCompleteGroupStage={completeGroupStage}
-          userName={userName}
-        />
+      <div className="flex gap-4">
+        <Button onClick={resetTournament}>Restart Tournament</Button>
+        <Button 
+          variant="outline" 
+          onClick={() => setShowResults(true)}
+        >
+          View Results
+        </Button>
+      </div>
+      {tournament.knockoutStages.length === 0 || !showKnockout ? (
+        !isGroupStageComplete ? (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-center">Group Stage</h2>
+            <div className="text-center text-sm text-gray-500">
+              Match {currentMatchIndex + 1} of {tournament.groupStage.length}
+            </div>
+            <MatchRecorder
+              key={currentMatch.id}
+              match={currentMatch}
+              onUpdateMatch={handleMatchUpdate}
+              onComplete={() => {}}
+              userName={userName}
+              isEditable={!isGroupStageComplete}
+            />
+            <div className="flex justify-between mt-4">
+              <Button 
+                onClick={handlePrevious}
+                disabled={currentMatchIndex === 0}
+                variant="outline"
+              >
+                Previous Match
+              </Button>
+              <Button 
+                onClick={handleNext}
+                disabled={currentMatchIndex === tournament.groupStage.length - 1}
+                variant="outline"
+              >
+                Next Match
+              </Button>
+            </div>
+            {currentMatchIndex === tournament.groupStage.length - 1 && (
+              <Button 
+                onClick={handleGroupStageComplete}
+                className="w-full mt-4"
+              >
+                Complete Group Stage
+              </Button>
+            )}
+          </div>
+        ) : null
       ) : (
         <div className="flex flex-wrap gap-8 justify-center">
           {tournament.knockoutStages.map((stage, stageIndex) => (
@@ -216,6 +350,96 @@ export function TournamentBracket({ userName }: { userName: string }) {
           ))}
         </div>
       )}
+      <Dialog open={showResults} onOpenChange={setShowResults}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tournament Results</DialogTitle>
+            <DialogDescription>
+              {(() => {
+                const result = calculateGroupStageResult(tournament.groupStage);
+                const wins = Math.floor(result.points / 3);
+                const draws = result.points % 3;
+                return `Total Points: ${result.points} (${wins} wins, ${draws} draws)`;
+              })()}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {tournament.groupStage
+              .filter(match => match.team2 && match.score1 !== null && match.score2 !== null)
+              .map(match => (
+                <div key={match.id} className="flex justify-between items-center p-2 border rounded">
+                  <div className="font-semibold">{match.team1}</div>
+                  <div className="text-lg">
+                    {match.score1 ?? '-'} - {match.score2 ?? '-'}
+                  </div>
+                  <div className="font-semibold">{match.team2 || 'TBD'}</div>
+                </div>
+              ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={showCoinFlipExplanation} onOpenChange={setShowCoinFlipExplanation}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Coin Flip Required</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p>You have finished the group stage with 4 points.</p>
+            <p>According to the tournament rules, this means you need to win a coin flip to advance to the knockout stages.</p>
+            <p>Click continue to proceed with the coin flip.</p>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => {
+              setShowCoinFlipExplanation(false);
+              setShowCoinFlip(true);
+            }}>
+              Continue to Coin Flip
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <CoinFlipPopup 
+        isOpen={showCoinFlip} 
+        onOpenChange={setShowCoinFlip}
+        onResult={(won) => {
+          console.log("Coin flip result:", won);
+          setShowCoinFlip(false);
+          setCoinFlipWon(won);
+          setShowCoinFlipResult(true);
+        }}
+      />
+      <Dialog open={showCoinFlipResult} onOpenChange={setShowCoinFlipResult}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Coin Flip Result</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-lg font-semibold text-center">
+              {coinFlipWon ? "You won the coin flip!" : "You lost the coin flip."}
+            </p>
+            <p className="text-center">
+              {coinFlipWon 
+                ? "Congratulations! You advance to the knockout stages." 
+                : "Unfortunately, your tournament journey ends here."}
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => {
+              setShowCoinFlipResult(false);
+              if (coinFlipWon) {
+                setShowKnockout(true);
+                completeGroupStage(true);
+              } else {
+                resetTournament();
+                setShowKnockout(false);
+                completeGroupStage(false);
+              }
+            }}>
+              Continue
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

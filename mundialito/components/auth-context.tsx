@@ -15,14 +15,33 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Add this function to clear all localStorage
+const clearAllData = () => {
+  localStorage.removeItem("mundialito-user");
+  localStorage.removeItem("tournament-data");
+  localStorage.removeItem("completed-matches");
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
+    // Add event listener for page reload
+    const handleBeforeUnload = () => {
+      clearAllData();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Load user data
     const storedUser = localStorage.getItem("mundialito-user")
     if (storedUser) {
       setUser(JSON.parse(storedUser))
     }
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, [])
 
   const login = (name: string) => {
@@ -32,8 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = () => {
-    localStorage.removeItem("mundialito-user")
-    setUser(null)
+    clearAllData();
+    setUser(null);
   }
 
   return (

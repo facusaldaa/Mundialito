@@ -9,9 +9,10 @@ interface MatchRecorderProps {
   onUpdateMatch: (updatedMatch: GroupStageMatch) => void
   onComplete: () => void
   userName: string
+  isEditable: boolean
 }
 
-export function MatchRecorder({ match, onUpdateMatch, onComplete, userName }: MatchRecorderProps) {
+export function MatchRecorder({ match, onUpdateMatch, onComplete, userName, isEditable }: MatchRecorderProps) {
   const [localMatch, setLocalMatch] = useState<GroupStageMatch>(match)
 
   const updateField = (field: keyof GroupStageMatch, value: string) => {
@@ -94,7 +95,9 @@ export function MatchRecorder({ match, onUpdateMatch, onComplete, userName }: Ma
             placeholder="Location"
             required
           />
-          <Button type="submit" className="w-full">Save Match</Button>
+          <Button type="submit" className="w-full" disabled={!isEditable}>
+            {isEditable ? "Save Match" : "Match Locked"}
+          </Button>
         </form>
       </CardContent>
     </Card>
