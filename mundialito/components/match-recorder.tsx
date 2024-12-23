@@ -13,7 +13,19 @@ interface MatchRecorderProps {
 }
 
 export function MatchRecorder({ match, onUpdateMatch, onComplete, userName, isEditable }: MatchRecorderProps) {
-  const [localMatch, setLocalMatch] = useState<GroupStageMatch>(match)
+  const [localMatch, setLocalMatch] = useState<GroupStageMatch>(() => {
+    if (!match.date || !match.time) {
+      const now = new Date();
+      const currentDate = now.toISOString().split('T')[0];
+      const currentTime = now.toTimeString().slice(0, 5);
+      return {
+        ...match,
+        date: match.date || currentDate,
+        time: match.time || currentTime
+      };
+    }
+    return match;
+  });
 
   const updateField = (field: keyof GroupStageMatch, value: string) => {
     setLocalMatch(prev => {
@@ -42,7 +54,7 @@ export function MatchRecorder({ match, onUpdateMatch, onComplete, userName, isEd
       <CardHeader>
         <CardTitle>Record Match {match.position + 1} of 3</CardTitle>
         <CardDescription>
-          {match.position === 0 ? "First" : match.position === 1 ? "Second" : "Third"} match in the group stage
+          {match.position === 0 ? "Primer" : match.position === 1 ? "Segundo" : "Tercero"} partido en la fase de grupos
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -74,21 +86,21 @@ export function MatchRecorder({ match, onUpdateMatch, onComplete, userName, isEd
               required
             />
           </div>
-          <label className="block text-sm font-medium text-gray-700">Date</label>
+          <label className="block text-sm font-medium text-gray-700">Fecha</label>
           <Input
             type="date"
             value={localMatch.date}
             onChange={(e) => updateField("date", e.target.value)}
             required
           />
-          <label className="block text-sm font-medium text-gray-700 mt-4">Time</label>
+          <label className="block text-sm font-medium text-gray-700 mt-4">Hora</label>
           <Input
             type="time"
             value={localMatch.time}
             onChange={(e) => updateField("time", e.target.value)}
             required
           />
-          <label className="block text-sm font-medium text-gray-700 mt-4">Location</label>
+          <label className="block text-sm font-medium text-gray-700 mt-4">Lugar</label>
           <Input
             value={localMatch.location}
             onChange={(e) => updateField("location", e.target.value)}
@@ -96,7 +108,7 @@ export function MatchRecorder({ match, onUpdateMatch, onComplete, userName, isEd
             required
           />
           <Button type="submit" className="w-full" disabled={!isEditable}>
-            {isEditable ? "Save Match" : "Match Locked"}
+            {isEditable ? "Guardar Partido" : "Partido Bloqueado"}
           </Button>
         </form>
       </CardContent>

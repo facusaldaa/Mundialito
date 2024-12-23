@@ -20,19 +20,19 @@ export function LoginForm() {
   return (
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle>Welcome to Mundialito</CardTitle>
+        <CardTitle>¡Bienvenido a Mundialito!</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             type="text"
-            placeholder="Enter your name"
+            placeholder="Ingresa tu nombre"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
           />
           <Button type="submit" className="w-full">
-            Start Tournament
+            Iniciar Torneo
           </Button>
         </form>
       </CardContent>

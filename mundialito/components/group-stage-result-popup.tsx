@@ -16,8 +16,8 @@ export function GroupStageResultPopup({ isOpen, onClose, advanced }: GroupStageR
         </DialogHeader>
         <DialogDescription>
           {advanced 
-            ? "Congratulations! You've advanced to the knockout stage."
-            : "Unfortunately, you didn't advance to the knockout stage."}
+            ? "¡Felicidades! Has avanzado a la fase de eliminatorias."
+            : "¡Lo siento! No has avanzado a la fase de eliminatorias."}
         </DialogDescription>
         <DialogFooter>
           <Button onClick={onClose}>Close</Button>

@@ -287,20 +287,20 @@ export function TournamentBracket({ userName }: { userName: string }) {
   return (
     <div className="space-y-8">
       <div className="flex gap-4">
-        <Button onClick={resetTournament}>Restart Tournament</Button>
+        <Button onClick={resetTournament}>Reiniciar Torneo</Button>
         <Button 
           variant="outline" 
           onClick={() => setShowResults(true)}
         >
-          View Results
+          Ver Resultados
         </Button>
       </div>
       {tournament.knockoutStages.length === 0 || !showKnockout ? (
         !isGroupStageComplete ? (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-center">Group Stage</h2>
+            <h2 className="text-xl font-bold text-center">Fase de Grupos</h2>
             <div className="text-center text-sm text-gray-500">
-              Match {currentMatchIndex + 1} of {tournament.groupStage.length}
+              Partido {currentMatchIndex + 1} de {tournament.groupStage.length}
             </div>
             <MatchRecorder
               key={currentMatch.id}
@@ -316,14 +316,14 @@ export function TournamentBracket({ userName }: { userName: string }) {
                 disabled={currentMatchIndex === 0}
                 variant="outline"
               >
-                Previous Match
+                Partido Anterior
               </Button>
               <Button 
                 onClick={handleNext}
                 disabled={currentMatchIndex === tournament.groupStage.length - 1}
                 variant="outline"
               >
-                Next Match
+                Siguiente Partido
               </Button>
             </div>
             {currentMatchIndex === tournament.groupStage.length - 1 && (
@@ -331,7 +331,7 @@ export function TournamentBracket({ userName }: { userName: string }) {
                 onClick={handleGroupStageComplete}
                 className="w-full mt-4"
               >
-                Complete Group Stage
+                Finalizar Fase de Grupos
               </Button>
             )}
           </div>
@@ -353,13 +353,13 @@ export function TournamentBracket({ userName }: { userName: string }) {
       <Dialog open={showResults} onOpenChange={setShowResults}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tournament Results</DialogTitle>
+            <DialogTitle>Resultados del Torneo</DialogTitle>
             <DialogDescription>
               {(() => {
                 const result = calculateGroupStageResult(tournament.groupStage);
                 const wins = Math.floor(result.points / 3);
                 const draws = result.points % 3;
-                return `Total Points: ${result.points} (${wins} wins, ${draws} draws)`;
+                return `Total Puntos: ${result.points} (${wins} victorias, ${draws} empates)`;
               })()}
             </DialogDescription>
           </DialogHeader>
@@ -381,19 +381,19 @@ export function TournamentBracket({ userName }: { userName: string }) {
       <Dialog open={showCoinFlipExplanation} onOpenChange={setShowCoinFlipExplanation}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Coin Flip Required</DialogTitle>
+            <DialogTitle>Flip de Moneda Requerido</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <p>You have finished the group stage with 4 points.</p>
-            <p>According to the tournament rules, this means you need to win a coin flip to advance to the knockout stages.</p>
-            <p>Click continue to proceed with the coin flip.</p>
+            <p>Has terminado la fase de grupos con 4 puntos.</p>
+            <p>Según las reglas del torneo, esto significa que necesitas ganar un flip de moneda para avanzar a la fase de eliminatorias.</p>
+            <p>Haz clic en continuar para proceder con el flip de moneda.</p>
           </div>
           <div className="flex justify-end">
             <Button onClick={() => {
               setShowCoinFlipExplanation(false);
               setShowCoinFlip(true);
             }}>
-              Continue to Coin Flip
+              Continuar al Flip de Moneda
             </Button>
           </div>
         </DialogContent>
@@ -411,16 +411,16 @@ export function TournamentBracket({ userName }: { userName: string }) {
       <Dialog open={showCoinFlipResult} onOpenChange={setShowCoinFlipResult}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Coin Flip Result</DialogTitle>
+            <DialogTitle>Resultado del Flip de Moneda</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <p className="text-lg font-semibold text-center">
-              {coinFlipWon ? "You won the coin flip!" : "You lost the coin flip."}
+              {coinFlipWon ? "¡Ganaste el flip de moneda!" : "¡Perdiste el flip de moneda."}
             </p>
             <p className="text-center">
               {coinFlipWon 
-                ? "Congratulations! You advance to the knockout stages." 
-                : "Unfortunately, your tournament journey ends here."}
+                ? "¡Felicidades! Avanzaste a la fase de eliminatorias." 
+                : "¡Lo siento! Tu viaje en el torneo termina aquí."}
             </p>
           </div>
           <div className="flex justify-end">
@@ -435,7 +435,7 @@ export function TournamentBracket({ userName }: { userName: string }) {
                 completeGroupStage(false);
               }
             }}>
-              Continue
+              Continuar
             </Button>
           </div>
         </DialogContent>

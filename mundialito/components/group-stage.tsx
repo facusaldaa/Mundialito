@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { GroupStageMatch } from "@/types/tournament"
 import { MatchRecorder } from "@/components/match-recorder"
 import { GroupStageResultPopup } from "@/components/group-stage-result-popup"
-import { CoinFlipPopup } from "@/components/coin-flip-popup"
 
 interface GroupStageProps {
   userMatches: GroupStageMatch[]
@@ -21,7 +20,6 @@ export function GroupStage({ userMatches, currentMatch, onUpdateMatches, onCompl
   const [currentMatchIndex, setCurrentMatchIndex] = useState(currentMatch)
   const [showResultPopup, setShowResultPopup] = useState(false)
   const [advanced, setAdvanced] = useState(false)
-  const [showCoinFlip, setShowCoinFlip] = useState(false)
 
   const updateMatch = (updatedMatch: GroupStageMatch) => {
     const newMatches = localMatches.map(match => 
@@ -53,8 +51,6 @@ export function GroupStage({ userMatches, currentMatch, onUpdateMatches, onCompl
     if (totalPoints >= 7) {
       setAdvanced(true);
       setShowResultPopup(true);
-    } else if (totalPoints === 4) {
-      setShowCoinFlip(true);
     } else {
       setAdvanced(false);
       setShowResultPopup(true);
@@ -82,19 +78,11 @@ export function GroupStage({ userMatches, currentMatch, onUpdateMatches, onCompl
     </Card>
   )
 
-  const renderCoinFlipResult = () => (
-    <div>
-      {advanced !== null && (
-        <p>Coin Flip Result: {advanced ? "Heads" : "Tails"}</p>
-      )}
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Group Stage</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Fase de Grupos</CardTitle>
         </CardHeader>
         <CardContent>
           {currentMatchIndex < localMatches.length ? (
@@ -109,9 +97,9 @@ export function GroupStage({ userMatches, currentMatch, onUpdateMatches, onCompl
             localMatches.map((match, index) => renderMatchSummary(match, index))
           )}
           <div className="flex justify-between mt-4">
-            <Button onClick={prevMatch} disabled={currentMatchIndex === 0}>Previous</Button>
+            <Button onClick={prevMatch} disabled={currentMatchIndex === 0}>Anterior</Button>
             <Button onClick={nextMatch} disabled={currentMatchIndex >= localMatches.length}>
-              {currentMatchIndex < localMatches.length - 1 ? "Next" : "Finish Group Stage"}
+              {currentMatchIndex < localMatches.length - 1 ? "Siguiente" : "Finalizar Fase de Grupos"}
             </Button>
           </div>
         </CardContent>
@@ -121,15 +109,6 @@ export function GroupStage({ userMatches, currentMatch, onUpdateMatches, onCompl
         onClose={closeResultPopup}
         advanced={advanced}
       />
-      <CoinFlipPopup 
-        isOpen={showCoinFlip} 
-        onOpenChange={setShowCoinFlip}
-        onResult={won => {
-          setAdvanced(won);
-          setShowResultPopup(true);
-        }}
-      />
-      {renderCoinFlipResult()}
     </div>
   )
 }
